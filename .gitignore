@@ -1,5 +1,6 @@
 .gdb_history
 openocd.log
+bin
 *.o
 *.d
 *.axf

@@ -1,4 +1,5 @@
-ROOT=./
+ROOT=.
+OUTDIR=${ROOT}/bin
 PROJECT=blink
 COMPILER=gcc
 PART=LM4F232H5BB
@@ -8,19 +9,19 @@ INC_PATHS=tivaware \
 #
 # The default rule, which causes the project example to be built.
 #
-all: ${COMPILER}
-all: ${COMPILER}/${PROJECT}.axf
+all: ${OUTDIR}
+all: ${OUTDIR}/${PROJECT}.axf
 
-${COMPILER}:
-	@mkdir -p ${COMPILER}
+${OUTDIR}:
+	@mkdir -p ${OUTDIR}
 
-${COMPILER}/${PROJECT}.axf: ${COMPILER}/${PROJECT}.o
-${COMPILER}/${PROJECT}.axf: ${ROOT}/tivaware/startup_${COMPILER}.o
-${COMPILER}/${PROJECT}.axf: ${ROOT}/tivaware/driverlib/${COMPILER}/libdriver.a
-${COMPILER}/${PROJECT}.axf: ${ROOT}/tivaware/project.ld
+${OUTDIR}/${PROJECT}.axf: ${OUTDIR}/${PROJECT}.o
+${OUTDIR}/${PROJECT}.axf: ${ROOT}/tivaware/startup.o
+${OUTDIR}/${PROJECT}.axf: ${ROOT}/tivaware/driverlib/gcc/libdriver.a
+${OUTDIR}/${PROJECT}.axf: ${ROOT}/tivaware/project.ld
 
 clean:
-	@rm -rf ${COMPILER} ${wildcard *~}
+	@rm -rf bin ${wildcard *~}
 
 vpath %.c src
 
@@ -78,7 +79,7 @@ LIBM:=${shell ${CC} ${CFLAGS} -print-file-name=libm.a}
 #
 # The rule for building the object file from each C source file.
 #
-${COMPILER}${SUFFIX}/%.o: %.c
+${OUTDIR}/%.o: %.c
 	@if [ 'x${VERBOSE}' = x ]; \
 	then \
 	  echo "  CC    ${<}"; \
@@ -90,7 +91,7 @@ ${COMPILER}${SUFFIX}/%.o: %.c
 #
 # The rule for building the object file from each assembly source file.
 #
-${COMPILER}${SUFFIX}/%.o: %.S
+${OUTDIR}/%.o: %.S
 	@if [ 'x${VERBOSE}' = x ]; \
 	then \
 		echo "  AS    ${<}"; \
@@ -102,7 +103,7 @@ ${COMPILER}${SUFFIX}/%.o: %.S
 #
 # The rule for creating an object library.
 #
-${COMPILER}${SUFFIX}/%.a:
+${OUTDIR}/%.a:
 	@if [ 'x${VERBOSE}' = x ]; \
 	then \
 		echo "  AR    ${@}"; \
@@ -114,7 +115,7 @@ ${COMPILER}${SUFFIX}/%.a:
 #
 # The rule for linking the application.
 #
-${COMPILER}${SUFFIX}/%.axf:
+${OUTDIR}/%.axf:
 	@ldname="${ROOT}/tivaware/project.ld"; \
 	if [ 'x${VERBOSE}' = x ]; \
 	then \
@@ -130,3 +131,4 @@ ${COMPILER}${SUFFIX}/%.axf:
 		${LDFLAGS} -o ${@} $(filter %.o %.a, ${^}) \
 		'${LIBM}' '${LIBC}' '${LIBGCC}'
 	@${OBJCOPY} -O binary ${@} ${@:.axf=.bin}
+	@${OBJCOPY} -O ihex ${@} ${@:.axf=.hex}
