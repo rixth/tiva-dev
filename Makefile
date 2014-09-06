@@ -1,14 +1,10 @@
 ROOT=.
 OUTDIR=${ROOT}/bin
 PROJECT=blink
-COMPILER=gcc
 PART=LM4F232H5BB
 INC_PATHS=tivaware \
 					src
 
-#
-# The default rule, which causes the project example to be built.
-#
 all: ${OUTDIR}
 all: ${OUTDIR}/${PROJECT}.axf
 
@@ -17,17 +13,25 @@ ${OUTDIR}:
 
 ${OUTDIR}/${PROJECT}.axf: ${OUTDIR}/${PROJECT}.o
 ${OUTDIR}/${PROJECT}.axf: ${ROOT}/tivaware/startup.o
-${OUTDIR}/${PROJECT}.axf: ${ROOT}/tivaware/driverlib/gcc/libdriver.a
+# Comment this out to make the driverlib .o's yourself
+${OUTDIR}/${PROJECT}.axf: ${OUTDIR}/driverlib.a
+# ${OUTDIR}/${PROJECT}.axf: ${ROOT}/tivaware/driverlib/gpio.o
+# ${OUTDIR}/${PROJECT}.axf: ${ROOT}/tivaware/driverlib/sysctl.o
 ${OUTDIR}/${PROJECT}.axf: ${ROOT}/tivaware/project.ld
 
+debug:
+	@VERBOSE=1 DEBUG=1 make all
+	${GDB} -tui ${OUTDIR}/${PROJECT}.axf
+
 clean:
-	@rm -rf bin ${wildcard *~}
+	@rm -rf bin/* $(shell find . -type f -name '*.o' -o -name '*.d')
 
 vpath %.c src
 
 # Compiler binaries
 PREFIX=arm-none-eabi
 CC=${PREFIX}-gcc
+GDB=${PREFIX}-gdb
 AR=${PREFIX}-ar
 LD=${PREFIX}-ld
 OBJCOPY=${PREFIX}-objcopy
@@ -40,6 +44,7 @@ FPU=-mfpu=fpv4-sp-d16 \
 
 # Assembler flags
 AFLAGS=-mthumb \
+			 -Dgcc \
 			 ${CPU} \
 			 ${FPU} \
 			 -MD
@@ -47,6 +52,7 @@ AFLAGS+=${patsubst %,-I%,${subst :, ,${INC_PATHS}}}
 
 # Compiler flags
 CFLAGS=-mthumb \
+			 -Dgcc \
        ${CPU} \
        ${FPU} \
        -ffunction-sections \
@@ -62,7 +68,7 @@ CFLAGS+=${patsubst %,-I%,${subst :, ,${INC_PATHS}}}
 
 ifdef DEBUG
 CFLAGS+=-g \
-			  -D DEBUG \
+			  -DDEBUG \
 			  -O0
 else
 CFLAGS+=-Os
@@ -84,9 +90,9 @@ ${OUTDIR}/%.o: %.c
 	then \
 	  echo "  CC    ${<}"; \
 	else \
-	  echo ${CC} ${CFLAGS} -D${COMPILER} -o ${@} ${<}; \
+	  echo ${CC} ${CFLAGS} -o ${@} ${<}; \
   fi
-	@${CC} ${CFLAGS} -D${COMPILER} -o ${@} ${<}
+	@${CC} ${CFLAGS} -o ${@} ${<}
 
 #
 # The rule for building the object file from each assembly source file.
@@ -96,14 +102,15 @@ ${OUTDIR}/%.o: %.S
 	then \
 		echo "  AS    ${<}"; \
 	else \
-		echo ${CC} ${AFLAGS} -D${COMPILER} -o ${@} -c ${<}; \
+		echo ${CC} ${AFLAGS} -o ${@} -c ${<}; \
 	fi
-	@${CC} ${AFLAGS} -D${COMPILER} -o ${@} -c ${<}
+	@${CC} ${AFLAGS} -o ${@} -c ${<}
 
 #
 # The rule for creating an object library.
 #
-${OUTDIR}/%.a:
+DRIVERLIBSRC = ${wildcard tivaware/driverlib/*.c}
+${OUTDIR}/driverlib.a: ${DRIVERLIBSRC:.c=.o}
 	@if [ 'x${VERBOSE}' = x ]; \
 	then \
 		echo "  AR    ${@}"; \
