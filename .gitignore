@@ -1,0 +1,9 @@
+.gdb_history
+openocd.log
+*.o
+*.d
+*.axf
+*.bin
+*.elf
+*.hex
+*.map
