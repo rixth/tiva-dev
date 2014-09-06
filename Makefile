@@ -11,7 +11,7 @@ all: ${OUTDIR}/${PROJECT}.axf
 ${OUTDIR}:
 	@mkdir -p ${OUTDIR}
 
-${OUTDIR}/${PROJECT}.axf: ${OUTDIR}/${PROJECT}.o
+${OUTDIR}/${PROJECT}.axf: src/${PROJECT}.o
 ${OUTDIR}/${PROJECT}.axf: ${ROOT}/tivaware/startup.o
 # Comment this out to make the driverlib .o's yourself
 ${OUTDIR}/${PROJECT}.axf: ${OUTDIR}/driverlib.a
@@ -85,7 +85,7 @@ LIBM:=${shell ${CC} ${CFLAGS} -print-file-name=libm.a}
 #
 # The rule for building the object file from each C source file.
 #
-${OUTDIR}/%.o: %.c
+%.o: %.c
 	@if [ 'x${VERBOSE}' = x ]; \
 	then \
 	  echo "  CC    ${<}"; \
